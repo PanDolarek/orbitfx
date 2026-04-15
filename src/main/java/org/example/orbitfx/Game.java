@@ -38,7 +38,7 @@ public class Game extends Application {
 
         planets.add(new Planet("Earth", 250, 200, 50, 1000.0, Color.BLUE));
         planets.add(new Planet("Mars", 500, 500, 50, 1000.0, Color.RED));
-        planets.add(new Planet("SRAM", 750, 750, 50, 3000.0, Color.YELLOW));
+        planets.add(new Planet("Venus", 750, 750, 50, 3000.0, Color.YELLOW));
 
         Scene scene = new Scene(root, 1000, 1000);
 
@@ -53,7 +53,7 @@ public class Game extends Application {
             public void handle(MouseEvent mouseEvent) {
                 if(mouseEvent.getButton() == MouseButton.PRIMARY) {
                     System.out.println("KLIK" + mouseEvent.getX() + " " + mouseEvent.getY());
-                    Planet newPlanet = new Planet("SchlapaccioneNaARYJ", mouseEvent.getX(), mouseEvent.getY(), 50, 5000.0, Color.WHITE);
+                    Planet newPlanet = new Planet("Black but actually white hole?", mouseEvent.getX(), mouseEvent.getY(), 50, 5000.0, Color.WHITE);
                     planets.add(newPlanet);
                     allObjects.add(newPlanet);
                     simulationArea.getChildren().add(newPlanet.getShape());
