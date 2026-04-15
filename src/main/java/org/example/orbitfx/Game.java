@@ -102,6 +102,7 @@ public class Game extends Application {
             @Override
             public void handle(long now) {
                 for (Planet a : allObjects) {
+                    if(a.mass < 1000){
                         for (Planet b : allObjects) {
                             if (a == b) continue;
 
@@ -119,6 +120,7 @@ public class Game extends Application {
                                 a.velX = 0;
                             }
                         }
+                    }
                 }
 
                 for (Planet obj : allObjects) {
