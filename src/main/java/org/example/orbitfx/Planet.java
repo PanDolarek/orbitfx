@@ -9,21 +9,35 @@ public class Planet {
     public String name;
     public double x,y;
     public double velX, velY;
+    public final double radius;
     public double mass;
     public final Circle shape;
+    private double startX;
+    private double startY;
 
-    public Planet(String name, double startX, double startY, double radius, double mass, Color color) {
+    public Planet(String name, double startX, double startY, double radius, double mass, double velX, double Vely, Color color) {
         this.name = name;
         this.x = startX;
         this.y = startY;
         this.mass = mass;
+        this.radius = radius;
         this.velX = 0.0;
         this.velY = 0.0;
         this.shape = new Circle(x, y, radius, color);
+        this.startX = startX;
+        this.startY = startY;
     }
 
     public Circle getShape() {
         return shape;
+    }
+
+    public double getRadius(){
+        return radius;
+    }
+
+    public double getMass(){
+        return mass;
     }
 
     public void updatePosition(double speedMultiplier) {
@@ -41,6 +55,13 @@ public class Planet {
         this.velY = newVelY;
         this.shape.setCenterX(this.x);
         this.shape.setCenterY(this.y);
+    }
+
+    public void resetToStart() {
+        this.x = this.startX;
+        this.y = this.startY;
+        this.velX = 0;
+        this.velY = 0;
     }
 
     @Override

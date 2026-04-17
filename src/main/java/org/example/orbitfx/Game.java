@@ -24,7 +24,7 @@ public class Game extends Application {
     public List<Planet> planets = new ArrayList<>();
     public List<Planet> allObjects = new ArrayList<>();
 
-    Planet ship = new Planet("Ship",350, 200, 10, 1.0, Color.GREEN);
+    Planet ship = new Planet("Ship",250, 500, 10, 1000, 0, 0, Color.GREEN);
 
     private final double G = 2.0;
     private double simSpeed = 0.1;
@@ -36,15 +36,18 @@ public class Game extends Application {
         Pane simulationArea = new Pane();
         BorderPane root = new BorderPane();
 
-        planets.add(new Planet("Earth", 250, 200, 50, 1000.0, Color.BLUE));
-        planets.add(new Planet("Mars", 500, 500, 50, 1000.0, Color.RED));
-        planets.add(new Planet("Venus", 750, 750, 50, 3000.0, Color.YELLOW));
+        planets.add(new Planet("Earth", 500, 500, 50, 100000.0, 0, 0, Color.BLUE));
+        Planet moon = new Planet("Moon", 800, 500, 25, 100.0, 0, 30, Color.GRAY);
+        //planets.add(new Planet("Earth", 250, 200, 50, 1000.0, 0, 0, Color.BLUE));
+        //planets.add(new Planet("Mars", 500, 500, 50, 1000.0, 0, 0, Color.RED));
+        //planets.add(new Planet("Venus", 750, 750, 50, 3000.0, 0, 0,Color.YELLOW));
 
         Scene scene = new Scene(root, 1000, 1000);
 
 
 
         simulationArea.getChildren().addAll(ship.getShape());
+        simulationArea.getChildren().addAll(moon.getShape());
         for(Planet p : planets){
             simulationArea.getChildren().add(p.getShape());
         }
@@ -53,7 +56,7 @@ public class Game extends Application {
             public void handle(MouseEvent mouseEvent) {
                 if(mouseEvent.getButton() == MouseButton.PRIMARY) {
                     System.out.println("KLIK" + mouseEvent.getX() + " " + mouseEvent.getY());
-                    Planet newPlanet = new Planet("Black but actually white hole?", mouseEvent.getX(), mouseEvent.getY(), 50, 5000.0, Color.WHITE);
+                    Planet newPlanet = new Planet("Black but actually white hole?", mouseEvent.getX(), mouseEvent.getY(), 50, 5000.0, 0, 0, Color.WHITE);
                     planets.add(newPlanet);
                     allObjects.add(newPlanet);
                     simulationArea.getChildren().add(newPlanet.getShape());
@@ -80,6 +83,7 @@ public class Game extends Application {
         allObjects.clear();
         allObjects.addAll(planets);
         allObjects.add(ship);
+        allObjects.add(moon);
 
         TextField velo = new TextField();
         Label infoLabel = new Label("Initial velocity = 0.0");
@@ -102,25 +106,37 @@ public class Game extends Application {
             @Override
             public void handle(long now) {
                 for (Planet a : allObjects) {
-                    if(a.mass < 1000){
                         for (Planet b : allObjects) {
-                            if (a == b) continue;
+                                if (a == b) continue;
 
-                            double dx = b.x - a.x;
-                            double dy = b.y - a.y;
-                            double distSq = (dx*dx) + (dy*dy);
-                            double dist = Math.sqrt(distSq);
+                                double dx = b.x - a.x;
+                                double dy = b.y - a.y;
+                                double distSq = (dx * dx) + (dy * dy);
+                                double dist = Math.sqrt(distSq);
+                                double rad = b.getRadius();
 
-                            if (dist > 50) {
-                                double gForce = (G * b.mass) / distSq;
-                                a.velX += gForce * (dx / dist) * simSpeed;
-                                a.velY += gForce * (dy / dist) * simSpeed;
-                            }else{
-                                a.velY = 0;
-                                a.velX = 0;
+                                if (dist > rad) {
+                                    double gForce = (G * b.mass * a.mass) / distSq;
+
+                                    double accA = gForce / a.mass;
+                                    double accB = gForce / b.mass;
+
+                                    a.velX += accA * (dx / dist) * simSpeed;
+                                    a.velY += accA * (dy / dist) * simSpeed;
+
+                                    b.velX -= accB * (dx / dist) * simSpeed;
+                                    b.velY -= accB * (dy / dist) * simSpeed;
+                                } else if (dist <= rad) {
+                                    double newVelX = (a.getMass() * a.velX + b.getMass() * b.velX) / (a.getMass() + b.getMass());
+
+                                    double newVelY = (a.getMass() * a.velY + b.getMass() * b.velY) / (a.getMass() + b.getMass());
+
+                                    a.velX = newVelX;
+                                    a.velY = newVelY;
+                                    b.velX = newVelX;
+                                    b.velY = newVelY;
+                                }
                             }
-                        }
-                    }
                 }
 
                 for (Planet obj : allObjects) {
@@ -132,7 +148,11 @@ public class Game extends Application {
         velo.setOnAction(event -> {
             try {
                 double newVelY = Double.parseDouble(velo.getText());
-                ship.reset(350, 200, 0, newVelY);
+                ship.reset(250, 500, 10, newVelY);
+                moon.reset(800, 500, 0, 37);
+                for(Planet p : planets){
+                    p.resetToStart();
+                }
                 infoLabel.setText("Initial velocity = " + newVelY);
                 timer.start();
             } catch (NumberFormatException e) {
