@@ -55,7 +55,7 @@ public class Game extends Application {
         simulationArea.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
             public void handle(MouseEvent mouseEvent) {
                 if(mouseEvent.getButton() == MouseButton.PRIMARY) {
-                    System.out.println("KLIK" + mouseEvent.getX() + " " + mouseEvent.getY());
+                    System.out.println("KLIK " + mouseEvent.getX() + " " + mouseEvent.getY());
                     Planet newPlanet = new Planet("Black but actually white hole?", mouseEvent.getX(), mouseEvent.getY(), 50, 5000.0, 0, 0, Color.WHITE);
                     planets.add(newPlanet);
                     allObjects.add(newPlanet);
