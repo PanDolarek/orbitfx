@@ -15,7 +15,7 @@ public class Planet {
     private double startX;
     private double startY;
 
-    public Planet(String name, double startX, double startY, double radius, double mass, double velX, double Vely, Color color) {
+    public Planet(String name, double startX, double startY, double radius, double mass, Color color) {
         this.name = name;
         this.x = startX;
         this.y = startY;
@@ -40,12 +40,19 @@ public class Planet {
         return mass;
     }
 
-    public void updatePosition(double speedMultiplier) {
-        this.x += this.velX * speedMultiplier;
-        this.y += this.velY * speedMultiplier;
+    public void updatePosition(double timeStep, double mpp, double cx, double cy, double relX, double relY) {
+        this.x += this.velX * timeStep;
+        this.y += this.velY * timeStep;
 
-        this.shape.setCenterX(this.x);
-        this.shape.setCenterY(this.y);
+        double relativeX = this.x - relX;
+        double relativeY = this.y - relY;
+
+        double screenX = cx + (relativeX / mpp);
+        double screenY = cy + (relativeY / mpp);
+
+        Circle c = this.getShape();
+        c.setCenterX(screenX);
+        c.setCenterY(screenY);
     }
 
     public void reset(double newX, double newY, double newVelX, double newVelY) {
