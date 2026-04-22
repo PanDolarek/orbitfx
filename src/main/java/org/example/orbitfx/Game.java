@@ -27,9 +27,9 @@ public class Game extends Application {
     private final double G = 6.67430e-11;
     private double dt = 3600;
     private double simSpeed = 1.0;
-    private double centerX = 725.0;
-    private double centerY = 375.0;
-    private double metersPerPixel = 384400000.0 / 375.0;
+    private double centerX = 960.0;
+    private double centerY = 540.0;
+    private double metersPerPixel = 500000000.0 / 540.0;
 
     Button button = new Button();
 
@@ -44,7 +44,8 @@ public class Game extends Application {
         planets.add(new Planet("Earth", centerX, centerY, 12, 5.972e24, Color.BLUE));
         Planet moon = new Planet("Moon", 384400000.0, 0, 8, 7.347e22, Color.GRAY);
 
-        Scene scene = new Scene(root, 1450, 750);
+        //laptop Scene scene = new Scene(root, 1450, 750);
+        Scene scene = new Scene(root, 1920, 1080);
 
 
 
@@ -76,7 +77,18 @@ public class Game extends Application {
         root.setStyle("-fx-background: black");
         root.setCenter(simulationArea);
 
-        AnimationTimer timer = new AnimationTimer() {
+        AnimationTimer draw = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                Planet earth = planets.get(0);
+                double currentDt = dt * simSpeed;
+                for (Planet obj : allObjects) {
+                    obj.updatePosition(currentDt, metersPerPixel, centerX, centerY, ship.x, ship.y);
+                }
+            }
+        };
+
+        AnimationTimer calculate = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 double currentDt = dt * simSpeed;
@@ -113,10 +125,6 @@ public class Game extends Application {
 
                                 }
                             }
-                }
-                        Planet earth = planets.get(0);
-                        for (Planet obj : allObjects) {
-                            obj.updatePosition(currentDt, metersPerPixel, centerX, centerY, earth.x, earth.y);
                         }
                     }
         };
@@ -134,7 +142,8 @@ public class Game extends Application {
                 }
 
                 infoLabel.setText("Initial velocity = " + newVelY + " m/s");
-                timer.start();
+                calculate.start();
+                draw.start();
             } catch (NumberFormatException e) {
                 infoLabel.setText("Error! Must be a number");
             }
