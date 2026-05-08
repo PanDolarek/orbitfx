@@ -2,7 +2,10 @@ package org.example.orbitfx;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-
+import javafx.scene.shape.Polyline;
+import javafx.geometry.Point2D;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 
 public class Planet {
@@ -14,6 +17,7 @@ public class Planet {
     public final Circle shape;
     private double startX;
     private double startY;
+    private Polyline path = new Polyline();
 
     public Planet(String name, double startX, double startY, double radius, double mass, Color color) {
         this.name = name;
@@ -26,6 +30,12 @@ public class Planet {
         this.shape = new Circle(x, y, radius, color);
         this.startX = startX;
         this.startY = startY;
+        path.setStroke(color);
+        path.setStrokeWidth(2);
+    }
+
+    public Polyline getPath() {
+        return path;
     }
 
     public Circle getShape() {
@@ -40,16 +50,11 @@ public class Planet {
         return mass;
     }
 
-    public void updatePosition(double timeStep, double mpp, double cx, double cy, double relX, double relY) {
-        this.x += this.velX * timeStep;
-        this.y += this.velY * timeStep;
-
+    public void updatePosition(double mpp, double cx, double cy, double relX, double relY) {
         double relativeX = this.x - relX;
         double relativeY = this.y - relY;
-
         double screenX = cx + (relativeX / mpp);
         double screenY = cy + (relativeY / mpp);
-
         Circle c = this.getShape();
         c.setCenterX(screenX);
         c.setCenterY(screenY);
@@ -71,15 +76,27 @@ public class Planet {
         this.velY = 0;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Planet planet)) return false;
-        return Double.compare(x, planet.x) == 0 && Double.compare(y, planet.y) == 0 && Double.compare(velX, planet.velX) == 0 && Double.compare(velY, planet.velY) == 0 && Double.compare(mass, planet.mass) == 0 && Objects.equals(name, planet.name) && Objects.equals(shape, planet.shape);
-    }
-
-    @Override
     public int hashCode() {
         return Objects.hash(name, x, y, velX, velY, mass, shape);
     }
+
+    private List<Point2D> pathHistory = new LinkedList<>();
+
+    public void recordPosition() {
+        pathHistory.add(new Point2D(x, y));
+
+        if (pathHistory.size() > 400) {
+            pathHistory.remove(0);
+        }
+    }
+
+    public List<Point2D> getPathHistory() {
+        return pathHistory;
+    }
+
+    public void clearHistory() {
+        pathHistory.clear();
+    }
+
 }
 
