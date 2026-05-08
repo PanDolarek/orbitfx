@@ -12,7 +12,7 @@ public class Planet {
     public String name;
     public double x,y;
     public double velX, velY;
-    public final double radius;
+    public double radius;
     public double mass;
     public final Circle shape;
     private double startX;

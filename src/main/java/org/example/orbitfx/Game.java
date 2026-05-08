@@ -59,7 +59,7 @@ public class Game extends Application {
         Planet saturn = new Planet("Saturn", 1.433e12, 0.0, 58232000.0, 5.683e26, Color.YELLOW);
         Planet uranus = new Planet("Uranus", 2.872e12, 0.0, 25362000.0, 8.681e25, Color.CYAN);
         Planet neptune = new Planet("Neptune", 4.495e12, 0.0, 24622000.0, 1.024e26, Color.DARKBLUE);
-        Planet ship = new Planet("Ship", 1.496e11, -10000000.0, 1000.0, 2600000, Color.VIOLET);
+        Planet ship = new Planet("Ship", 1.496e11, -10000000.0, 1000000.0, 2600000, Color.VIOLET);
 
         allObjects.clear();
         allObjects.add(sun);
@@ -213,6 +213,13 @@ public class Game extends Application {
                                 a.velY = newVelY;
                                 b.velX = newVelX;
                                 b.velY = newVelY;
+                                if(Math.sqrt(a.velX * a.velX + a.velY * a.velY) > 20 && a.radius > b.radius){
+                                    a.mass += b.mass;
+                                    a.radius += b.radius;
+                                    b.mass = 0;
+                                    b.radius = 0;
+                                    allObjects.remove(allObjects.get(j));
+                                }
                             }
                         }
                     }
@@ -220,29 +227,6 @@ public class Game extends Application {
                     for (Planet p : allObjects) {
                         p.x += p.velX * stepDt;
                         p.y += p.velY * stepDt;
-                    }
-                }
-
-                Planet focus = camera.getFocusedObject();
-                infoLabel.setText(String.format("Current zoom out: %.2fx", camera.getMetersPerPixel()));
-
-                for (Planet obj : allObjects) {
-                    obj.updatePosition(camera.getMetersPerPixel(), 960.0, 540.0, focus.x, focus.y);
-                    obj.recordPosition();
-
-                    double screenRadius = camera.getScreenRadius(obj.getRadius(), 4.0);
-                    if (obj.getShape() != null) {
-                        Circle circle = obj.getShape();
-                        circle.setRadius(screenRadius);
-                    }
-
-                    Polyline trail = obj.getPath();
-                    trail.getPoints().clear();
-
-                    for (Point2D point : obj.getPathHistory()) {
-                        double pScreenX = camera.getScreenX(point.getX());
-                        double pScreenY = camera.getScreenY(point.getY());
-                        trail.getPoints().addAll(pScreenX, pScreenY);
                     }
                 }
             }
