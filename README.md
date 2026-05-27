@@ -1,7 +1,10 @@
 # orbitfx
-Gravity simulation in java with javafx
+Gravity simulation in java, using javafx
 
-Simulation starts as soon as you enter the initial velocity (vertical)
 Controls:
-LMB - create a massive planet
-RMB - delete a planet
+
+Tab - choose a button
+
+Space - select
+
+<img width="800" height="450" alt="orbitfx" src="https://github.com/user-attachments/assets/392ee937-4b33-4e36-b0bf-127af61a1d8f" />

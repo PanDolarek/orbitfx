@@ -14,6 +14,7 @@ public class Planet {
     public double velX, velY;
     public double radius;
     public double mass;
+    private final double resetMass;
     public final Circle shape;
     private double startX;
     private double startY;
@@ -24,6 +25,7 @@ public class Planet {
         this.x = startX;
         this.y = startY;
         this.mass = mass;
+        this.resetMass = mass;
         this.radius = radius;
         this.velX = 0.0;
         this.velY = 0.0;
@@ -65,6 +67,7 @@ public class Planet {
         this.y = newY;
         this.velX = newVelX;
         this.velY = newVelY;
+        this.mass = resetMass;
         this.shape.setCenterX(this.x);
         this.shape.setCenterY(this.y);
     }
@@ -74,11 +77,10 @@ public class Planet {
         this.y = this.startY;
         this.velX = 0;
         this.velY = 0;
+        this.mass = resetMass;
     }
 
-    public int hashCode() {
-        return Objects.hash(name, x, y, velX, velY, mass, shape);
-    }
+    public int hashCode() { return Objects.hash(name, x, y, velX, velY, mass, shape);}
 
     private List<Point2D> pathHistory = new LinkedList<>();
 
@@ -94,8 +96,14 @@ public class Planet {
         return pathHistory;
     }
 
-    public void clearHistory() {
-        pathHistory.clear();
+    private Planet parentPlanet = null;
+
+    public void setParentPlanet(Planet parentPlanet){
+        this.parentPlanet = parentPlanet;
+    }
+
+    public Planet getParentPlanet(){
+        return this.parentPlanet;
     }
 
 }
