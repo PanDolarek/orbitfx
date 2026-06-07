@@ -2,8 +2,8 @@ package org.example.orbitfx;
 
 public class Camera {
     private double metersPerPixel;
-    private final double centerX;
-    private final double centerY;
+    private double centerX;
+    private double centerY;
     private Planet focusedObject;
 
     public Camera(double initialMetersPerPixel, double centerX, double centerY) {
@@ -44,5 +44,10 @@ public class Camera {
 
     public double getMetersPerPixel() {
         return metersPerPixel;
+    }
+
+    public void updateScreenSize(double newWidth, double newHeight) {
+        this.centerX = newWidth / 2.0;
+        this.centerY = newHeight / 2.0;
     }
 }

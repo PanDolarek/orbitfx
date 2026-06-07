@@ -15,6 +15,7 @@ public class Planet {
     public double radius;
     public double mass;
     private final double resetMass;
+    private final double resetRadius;
     public final Circle shape;
     private double startX;
     private double startY;
@@ -27,6 +28,7 @@ public class Planet {
         this.mass = mass;
         this.resetMass = mass;
         this.radius = radius;
+        this.resetRadius = radius;
         this.velX = 0.0;
         this.velY = 0.0;
         this.shape = new Circle(x, y, radius, color);
@@ -68,6 +70,7 @@ public class Planet {
         this.velX = newVelX;
         this.velY = newVelY;
         this.mass = resetMass;
+        this.radius = resetRadius;
         this.shape.setCenterX(this.x);
         this.shape.setCenterY(this.y);
     }

@@ -3,19 +3,12 @@ package org.example.orbitfx;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polyline;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +16,6 @@ import java.util.Objects;
 
 public class Game extends Application {
 
-    public List<Planet> planets = new ArrayList<>();
     public List<Planet> allObjects = new ArrayList<>();
     public Planet focusedObject;
     public List<Planet> resetObjects = new ArrayList<>();
@@ -31,42 +23,34 @@ public class Game extends Application {
     public void clearTrails() {
         for (Planet obj : allObjects) {
             obj.getPath().getPoints().clear();
+            obj.getPathHistory().clear();
         }
     }
 
     private final double G = 6.67430e-11;
-    private final double dt = 3600;
-    private double simSpeed = 1.0;
-
-    Button startButton = new Button("start/reset");
-    Button lowXButton = new Button("0.01x");
-    Button oneXButton = new Button("1x");
-    Button fiveXButton = new Button("5x");
-    Button tenXButton = new Button("10x");
-    Button twentyXButton = new Button("20x");
-    Button fiftyXButton = new Button("50x");
-    Button hundredXButton = new Button("100x");
+    private double simSpeed = 86400.0;
+    private String speedText = "1 Day/s";
+    private boolean isPaused = false;
+    private long lastTime = 0;
+    private double timeBuffer = 0.0;
 
     public void start(Stage stage) {
-        stage.setTitle("Orbit");
+        stage.setTitle("OrbitFX");
         Pane simulationArea = new Pane();
-        BorderPane root = new BorderPane();
-        //Scene scene = new Scene(root, 1450, 750);
-        Scene scene = new Scene(root, 1920, 1080);
+        StackPane root = new StackPane();
+        Scene scene = new Scene(root, 1280, 720);
 
         Planet sun = new Planet("Sun", 0.0, 0.0, 696340000.0, 1.989e30, Color.YELLOW);
-        Planet mercury = new Planet("Mercury", 5.79e10, 0.0, 2439700.0, 3.285e23,Color.BROWN);
-        Planet venus = new Planet("Venus", 1.082e11, 0.0, 6051800.0, 4.867e24,Color.ORANGE);
-        Planet earth = new Planet("Earth", 1.496e11, 0.0, 6371000.0, 5.972e24,Color.BLUE);
-        Planet mars = new Planet("Mars", 2.279e11, 0.0, 3389500.0, 6.417e23, Color.RED);
-        Planet jupiter = new Planet("Jupiter", 7.786e11, 0.0, 69911000.0, 1.898e27, Color.SADDLEBROWN);
-        //Planet jupiter = new Planet("Jupiter", 7.786e11, 0.0, 69911000000.0, 9.989e30, 9.989e30,Color.SADDLEBROWN);
-        Planet saturn = new Planet("Saturn", 1.433e12, 0.0, 58232000.0, 5.683e26, Color.YELLOW);
-        Planet uranus = new Planet("Uranus", 2.872e12, 0.0, 25362000.0, 8.681e25, Color.CYAN);
-        Planet neptune = new Planet("Neptune", 4.495e12, 0.0, 24622000.0, 1.024e26, Color.DARKBLUE);
-        Planet ship = new Planet("Ship", 1.496e11, -10000000.0, 1000000.0, 2600000, Color.VIOLET);
+        Planet mercury = new Planet("Mercury", 1.000e10, 4.490e10, 2439700.0, 3.285e23, Color.BROWN);
+        Planet venus = new Planet("Venus", -7.125e10, 8.045e10, 6051800.0, 4.867e24, Color.ORANGE);
+        Planet earth = new Planet("Earth", -3.293e10, 1.4336e11, 6371000.0, 5.972e24, Color.BLUE);
+        Planet mars = new Planet("Mars", 1.888e11, -8.391e10, 3389500.0, 6.417e23, Color.RED);
+        Planet jupiter = new Planet("Jupiter", 7.160e11, 1.885e11, 69911000.0, 1.898e27, Color.SADDLEBROWN);
+        Planet saturn = new Planet("Saturn", -5.733e10, 1.3512e12, 58232000.0, 5.683e26, Color.YELLOW);
+        Planet uranus = new Planet("Uranus", -2.706e12, 4.306e11, 25362000.0, 8.681e25, Color.CYAN);
+        Planet neptune = new Planet("Neptune", 3.143e12, 3.140e12, 24622000.0, 1.024e26, Color.DARKBLUE);
+        Planet ship = new Planet("Ship", -3.293e10, 1.4335e11, 1000000.0, 2600000, Color.VIOLET);
 
-        allObjects.clear();
         allObjects.add(sun);
         allObjects.add(mercury);
         allObjects.add(venus);
@@ -77,7 +61,6 @@ public class Game extends Application {
         allObjects.add(uranus);
         allObjects.add(neptune);
         allObjects.add(ship);
-
         resetObjects.addAll(allObjects);
 
         focusedObject = allObjects.getFirst();
@@ -87,53 +70,24 @@ public class Game extends Application {
             simulationArea.getChildren().add(obj.getShape());
             obj.getShape().setOnMouseClicked(event -> {
                 focusedObject = obj;
-                clearTrails();
             });
         }
 
-        lowXButton.setOnAction(ActionEvent -> {
-            simSpeed = 0.01;
-        });
+        UIManager ui = new UIManager();
 
-        oneXButton.setOnAction(ActionEvent -> {
-            simSpeed = 1.00;
-        });
+        root.setStyle("-fx-background-color: black;");
+        root.getChildren().add(simulationArea);
+        ui.attachTo(root);
 
-        fiveXButton.setOnAction(ActionEvent -> {
-            simSpeed = 5.00;
-        });
+        ui.realTimeBtn.setOnAction(event -> { simSpeed = 1.0; speedText = "1 s/s"; });
+        ui.minBtn.setOnAction(event -> { simSpeed = 60.0; speedText = "1 Minute/s"; });
+        ui.hourBtn.setOnAction(event -> { simSpeed = 3600.0; speedText = "1 Hour/s"; });
+        ui.dayBtn.setOnAction(event -> { simSpeed = 86400.0; speedText = "1 Day/s"; });
+        ui.weekBtn.setOnAction(event -> { simSpeed = 604800.0; speedText = "1 Week/s"; });
+        ui.monthBtn.setOnAction(event -> { simSpeed = 2592000.0; speedText = "1 Month/s"; });
+        ui.yearBtn.setOnAction(event -> { simSpeed = 31536000.0; speedText = "1 Year/s"; });
+        //ui.tenYearsBtn.setOnAction(event -> simSpeed = 315360000.0);
 
-        tenXButton.setOnAction(ActionEvent -> {
-            simSpeed = 10.00;
-        });
-
-        twentyXButton.setOnAction(ActionEvent -> {
-            simSpeed = 20.00;
-        });
-
-        fiftyXButton.setOnAction(ActionEvent -> {
-            simSpeed = 50.00;
-        });
-
-        hundredXButton.setOnAction(ActionEvent -> {
-            simSpeed = 100.00;
-        });
-
-        Label infoLabel = new Label();
-        Label velLabel = new Label();
-        Label massLabel = new Label();
-        Label radiusLabel = new Label();
-
-        HBox uiBar = new HBox(20, startButton, infoLabel, lowXButton, oneXButton, fiveXButton, tenXButton, twentyXButton, fiftyXButton, hundredXButton);
-        HBox setBar = new HBox(20, velLabel, massLabel, radiusLabel);
-        uiBar.setSpacing(20);
-        uiBar.setAlignment(Pos.CENTER);
-        setBar.setSpacing(20);
-        setBar.setAlignment(Pos.TOP_RIGHT);
-        root.setTop(uiBar);
-        root.setRight(setBar);
-        root.setStyle("-fx-background: black");
-        root.setCenter(simulationArea);
 
         double initialScale = 4.5e12 / 900.0;
         Camera camera = new Camera(initialScale, 960.0, 540.0);
@@ -152,7 +106,11 @@ public class Game extends Application {
 
                 if (distance <= 30.0) {
                     camera.setFocusedObject(obj);
-                    clearTrails();
+                    ui.massField.setText(String.format(java.util.Locale.US, "%.3e", obj.mass).replaceFirst("e\\+0*", "e"));
+                    ui.radiusField.setText(String.format(java.util.Locale.US, "%.3e", obj.radius).replaceFirst("e\\+0*", "e"));
+                    double currentVel = Math.sqrt(obj.velX * obj.velX + obj.velY * obj.velY);
+                    ui.velField.setText(String.format(java.util.Locale.US, "%.3e", currentVel).replaceFirst("e\\+0*", "e"));
+                    break;
                 }
             }
         });
@@ -163,21 +121,28 @@ public class Game extends Application {
             } else {
                 camera.zoomOut();
             }
-            clearTrails();
         });
 
         AnimationTimer draw = new AnimationTimer() {
             @Override
             public void handle(long now) {
+                double currentWidth = simulationArea.getWidth() > 0 ? simulationArea.getWidth() : 1920.0;
+                double currentHeight = simulationArea.getHeight() > 0 ? simulationArea.getHeight() : 1080.0;
+                double centerX = currentWidth / 2.0;
+                double centerY = currentHeight / 2.0;
+                camera.updateScreenSize(currentWidth, currentHeight);
                 Planet focus = camera.getFocusedObject();
-                float vel = (float) Math.sqrt(camera.getFocusedObject().velX * camera.getFocusedObject().velX + camera.getFocusedObject().velY * camera.getFocusedObject().velY);
-                infoLabel.setText(String.format("Current zoom out: %.2fx", camera.getMetersPerPixel()));
-                massLabel.setText(String.format(String.format("Selected planet mass: %6.3e", camera.getFocusedObject().mass)));
-                radiusLabel.setText(String.format(String.format("Selected planet radius: %6.3e", camera.getFocusedObject().radius)));
-                velLabel.setText(String.format(String.format("Selected planet orbital velocity: %6.3e", vel)));
+                float vel = (float) Math.sqrt(focus.velX * focus.velX + focus.velY * focus.velY);
+
+                ui.planetNameLabel.setText("Selected planet: " + focus.name);
+                ui.infoLabel.setText(String.format("Current zoom out: %.2fx", camera.getMetersPerPixel()));
+                ui.massLabel.setText(String.format("Mass: %6.3e", focus.mass));
+                ui.radiusLabel.setText(String.format("Radius: %6.3e", focus.radius));
+                ui.velLabel.setText(String.format("Velocity: %6.3e", vel));
+                ui.timeLabel.setText("Current simulation speed: " + speedText);
 
                 for (Planet obj : allObjects) {
-                    obj.updatePosition(camera.getMetersPerPixel(), 960.0, 540.0, focus.x, focus.y);
+                    obj.updatePosition(camera.getMetersPerPixel(), centerX, centerY, focus.x, focus.y);
                     obj.recordPosition();
 
                     double screenRadius = camera.getScreenRadius(obj.getRadius(), 4.0);
@@ -197,85 +162,168 @@ public class Game extends Application {
                 }
             }
         };
-                    AnimationTimer game = new AnimationTimer() {
-                        @Override
-                        public void handle(long now) {
-                            double currentDt = dt * simSpeed;
-                            int steps = 1000;
-                            double stepDt = currentDt / steps;
 
-                            for (int s = 0; s < steps; s++) {
-                                for (int i = 0; i < allObjects.size(); i++) {
-                                    for (int j = i + 1; j < allObjects.size(); j++) {
-                                        Planet a = allObjects.get(i);
-                                        Planet b = allObjects.get(j);
-                                        double dx = b.x - a.x;
-                                        double dy = b.y - a.y;
-                                        double distSq = (dx * dx) + (dy * dy);
-                                        double dist = Math.sqrt(distSq);
-                                        double minCollisionDist = a.getRadius() + b.getRadius();
+        ui.massField.setOnAction(e -> {
+            try {
+                Planet focused = camera.getFocusedObject();
+                if (focused != null) {
+                    focused.mass = Double.parseDouble(ui.massField.getText());
+                }
+            } catch (NumberFormatException ex) {
+                System.err.println("Mass must be a number!");
+            }
+        });
 
-                                        if (dist > minCollisionDist) {
-                                            double accA = (G * b.getMass()) / distSq;
-                                            double accB = (G * a.getMass()) / distSq;
-                                            a.velX += accA * (dx / dist) * stepDt;
-                                            a.velY += accA * (dy / dist) * stepDt;
-                                            b.velX -= accB * (dx / dist) * stepDt;
-                                            b.velY -= accB * (dy / dist) * stepDt;
-                                        } else {
-                                            double totalMass = a.getMass() + b.getMass();
-                                            double newVelX = (a.getMass() * a.velX + b.getMass() * b.velX) / totalMass;
-                                            double newVelY = (a.getMass() * a.velY + b.getMass() * b.velY) / totalMass;
-                                            a.velX = newVelX;
-                                            a.velY = newVelY;
-                                            b.velX = newVelX;
-                                            b.velY = newVelY;
-                                            if (Math.sqrt(a.velX * a.velX + a.velY * a.velY) > 20 && a.radius > b.radius) {
-                                                a.mass += b.mass;
-                                                a.radius += b.radius;
-                                                Polyline trail = b.getPath();
-                                                trail.getPoints().clear();
-                                                allObjects.remove(b);
-                                                simulationArea.getChildren().removeAll(b.getShape(), b.getPath());
-                                            }
-                                        }
-                                    }
-                                }
+        ui.radiusField.setOnAction(e -> {
+            try {
+                Planet focused = camera.getFocusedObject();
+                if (focused != null) {
+                    focused.radius = Double.parseDouble(ui.radiusField.getText());
+                }
+            } catch (NumberFormatException ex) {
+                System.err.println("Radius must be a number!");
+            }
+        });
 
-                                for (Planet p : allObjects) {
-                                    p.x += p.velX * stepDt;
-                                    p.y += p.velY * stepDt;
+        ui.velField.setOnAction(e -> {
+            try {
+                double targetVelocity = Double.parseDouble(ui.velField.getText());
+                Planet p = camera.getFocusedObject();
+
+                if (p != null) {
+                    double currentVelocity = Math.sqrt(p.velX * p.velX + p.velY * p.velY);
+
+                    if (currentVelocity > 0) {
+                        p.velX = p.velX * (targetVelocity / currentVelocity);
+                        p.velY = p.velY * (targetVelocity / currentVelocity);
+                    } else {
+                        p.velX = targetVelocity;
+                        p.velY = 0;
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                System.err.println("Velocity must be a number!");
+            }
+        });
+
+        AnimationTimer game = new AnimationTimer() {
+            private final double step = 10.0;
+            @Override
+            public void handle(long now) {
+                if (isPaused) {
+                    lastTime = now;
+                    return;
+                }
+                if (lastTime == 0) {
+                    lastTime = now;
+                    return;
+                }
+                double elapsedRealSeconds = (now - lastTime) / 1000000000.0;
+                lastTime = now;
+                if (elapsedRealSeconds > 0.1) {
+                    elapsedRealSeconds = 0.1;
+                }
+                double simSecondsToProcess = elapsedRealSeconds * simSpeed;
+                timeBuffer += simSecondsToProcess;
+
+                while (timeBuffer >= step) {
+
+                    for (int i = 0; i < allObjects.size(); i++) {
+                        for (int j = i + 1; j < allObjects.size(); j++) {
+                            Planet a = allObjects.get(i);
+                            Planet b = allObjects.get(j);
+                            double dx = b.x - a.x;
+                            double dy = b.y - a.y;
+                            double distSq = (dx * dx) + (dy * dy);
+                            double dist = Math.sqrt(distSq);
+                            double minCollisionDist = a.getRadius() + b.getRadius();
+
+                            if (dist > minCollisionDist) {
+                                double accA = (G * b.getMass()) / distSq;
+                                double accB = (G * a.getMass()) / distSq;
+                                a.velX += accA * (dx / dist) * step;
+                                a.velY += accA * (dy / dist) * step;
+                                b.velX -= accB * (dx / dist) * step;
+                                b.velY -= accB * (dy / dist) * step;
+                            } else {
+                                double totalMass = a.getMass() + b.getMass();
+                                double newVelX = (a.getMass() * a.velX + b.getMass() * b.velX) / totalMass;
+                                double newVelY = (a.getMass() * a.velY + b.getMass() * b.velY) / totalMass;
+                                a.velX = newVelX;
+                                a.velY = newVelY;
+                                b.velX = newVelX;
+                                b.velY = newVelY;
+
+                                if (Math.sqrt(b.velX * b.velX + b.velY * b.velY) > 20 && a.radius >= b.radius) {
+                                    a.mass += b.mass;
+                                    a.radius += b.radius;
+                                    b.getPath().getPoints().clear();
+                                    allObjects.remove(b);
+                                    simulationArea.getChildren().removeAll(b.getShape(), b.getPath());
                                 }
                             }
                         }
-                    };
+                    }
 
-                    startButton.setOnAction(event -> {
-                        sun.reset(0.0, 0, 0, 0);
-                        mercury.reset(5.79e10, 0, 9745, 46387);
-                        venus.reset(1.082e11, 0, 238, 34999);
-                        earth.reset(1.496e11, 0, 501, 29996);
-                        mars.reset(2.279e11, 0, 2251, 23995);
-                        jupiter.reset(7.786e11, 0, 634, 13085); //13085
-                        saturn.reset(1.433e12, 0, 525, 9686);
-                        uranus.reset(2.872e12, 0, 321, 6792);
-                        neptune.reset(4.495e12, 0, 46, 5400);
-                        ship.reset(1.496e11, -10000000.0, 6814, 29996);
+                    for (Planet p : allObjects) {
+                        p.x += p.velX * step;
+                        p.y += p.velY * step;
+                    }
 
-                        allObjects.clear();
-                        allObjects.addAll(resetObjects);
-
-                        for (Planet p : allObjects) {
-                            if (!simulationArea.getChildren().contains(p.getShape())) {
-                                simulationArea.getChildren().addAll(p.getShape(), p.getPath());
-                            }
-                        }
-                        clearTrails();
-                        game.start();
-                    });
-
-                    draw.start();
-                    stage.setScene(scene);
-                    stage.show();
+                    timeBuffer -= step;
                 }
             }
+        };
+
+        ui.pauseBtn.setOnAction(e -> {
+            isPaused = !isPaused;
+            ui.massField.setDisable(!isPaused);
+            ui.radiusField.setDisable(!isPaused);
+            ui.velField.setDisable(!isPaused);
+            ui.pauseLabel.setVisible(isPaused);
+        });
+
+        ui.resetBtn.setOnAction(event -> {
+            sun.reset(0.0, 0.0, 0.0, 0.0);
+            mercury.reset(1.000e10, 4.490e10, -57567, 12815);
+            venus.reset(-7.125e10, 8.045e10, -26399, -23380);
+            earth.reset(-3.293e10, 1.4336e11, -29520, -6781);
+            mars.reset(1.888e11, -8.391e10, 10761, 24215);
+            jupiter.reset(7.160e11, 1.885e11, -3491, 13260);
+            saturn.reset(-5.733e10, 1.3512e12, -10173, -431);
+            uranus.reset(-2.706e12, 4.306e11, -1117, -7027);
+            neptune.reset(3.143e12, 3.140e12, -3884, 3887);
+            ship.reset(-3.293224e10, 1.433697e11, -36162, -8307);
+
+            lastTime = 0;
+            timeBuffer = 0.0;
+            isPaused = true;
+
+            ui.massField.setDisable(false);
+            ui.radiusField.setDisable(false);
+            ui.velField.setDisable(false);
+            ui.pauseLabel.setVisible(true);
+
+            allObjects.clear();
+            allObjects.addAll(resetObjects);
+
+            for (Planet p : allObjects) {
+                if (!simulationArea.getChildren().contains(p.getShape())) {
+                    simulationArea.getChildren().addAll(p.getShape(), p.getPath());
+                }
+                clearTrails();
+            }
+
+            Planet focus = camera.getFocusedObject();
+            ui.massField.setText(String.format(java.util.Locale.US, "%.3e", focus.mass).replaceFirst("e\\+0*", "e"));
+            ui.radiusField.setText(String.format(java.util.Locale.US, "%.3e", focus.radius).replaceFirst("e\\+0*", "e"));
+
+            game.start();
+        });
+
+        draw.start();
+        stage.setScene(scene);
+        stage.setMaximized(true);
+        stage.show();
+    }
+}
