@@ -16,4 +16,4 @@ Upon launching the application, the system is paused. To interact with the simul
 3. You can modify these values by typing new numbers and pressing `Enter`. **Note:** Parameter editing is locked while the planets are moving. You can only change these values when the simulation is paused.
 4. Once your setup is ready, click the **Pause/Resume** button to unpause the system and watch the physics unfold.
 
-<img width="2560" height="1342" alt="orbit" src="https://github.com/user-attachments/assets/2c955d02-ee81-4be2-8ef8-3715f01965db" />
+<img width="100%" alt="orbit" src="https://github.com/user-attachments/assets/2c955d02-ee81-4be2-8ef8-3715f01965db" />
