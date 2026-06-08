@@ -90,7 +90,7 @@ public class Planet {
     public void recordPosition() {
         pathHistory.add(new Point2D(x, y));
 
-        if (pathHistory.size() > 400) {
+        if (pathHistory.size() > 200) {
             pathHistory.remove(0);
         }
     }

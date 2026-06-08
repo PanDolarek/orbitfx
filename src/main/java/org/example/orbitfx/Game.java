@@ -33,6 +33,7 @@ public class Game extends Application {
     private boolean isPaused = false;
     private long lastTime = 0;
     private double timeBuffer = 0.0;
+    private double trailAccumulator = 0.0;
 
     public void start(Stage stage) {
         stage.setTitle("OrbitFX");
@@ -136,14 +137,13 @@ public class Game extends Application {
 
                 ui.planetNameLabel.setText("Selected planet: " + focus.name);
                 ui.infoLabel.setText(String.format("Current zoom out: %.2fx", camera.getMetersPerPixel()));
-                ui.massLabel.setText(String.format("Mass: %6.3e", focus.mass));
-                ui.radiusLabel.setText(String.format("Radius: %6.3e", focus.radius));
-                ui.velLabel.setText(String.format("Velocity: %6.3e", vel));
+                ui.massLabel.setText(String.format("Mass: %6.3e [kg]", focus.mass));
+                ui.radiusLabel.setText(String.format("Radius: %6.3e [m]", focus.radius));
+                ui.velLabel.setText(String.format("Velocity: %6.3e [m/s]", vel));
                 ui.timeLabel.setText("Current simulation speed: " + speedText);
 
                 for (Planet obj : allObjects) {
                     obj.updatePosition(camera.getMetersPerPixel(), centerX, centerY, focus.x, focus.y);
-                    obj.recordPosition();
 
                     double screenRadius = camera.getScreenRadius(obj.getRadius(), 4.0);
                     if (obj.getShape() != null) {
@@ -152,13 +152,14 @@ public class Game extends Application {
                     }
 
                     Polyline trail = obj.getPath();
-                    trail.getPoints().clear();
+
+                    List<Double> flatPoints = new ArrayList<>(obj.getPathHistory().size() * 2);
 
                     for (Point2D point : obj.getPathHistory()) {
-                        double pScreenX = camera.getScreenX(point.getX());
-                        double pScreenY = camera.getScreenY(point.getY());
-                        trail.getPoints().addAll(pScreenX, pScreenY);
+                        flatPoints.add(camera.getScreenX(point.getX()));
+                        flatPoints.add(camera.getScreenY(point.getY()));
                     }
+                    trail.getPoints().setAll(flatPoints);
                 }
             }
         };
@@ -207,9 +208,18 @@ public class Game extends Application {
         });
 
         AnimationTimer game = new AnimationTimer() {
-            private final double step = 10.0;
             @Override
             public void handle(long now) {
+                double step;
+                if(simSpeed == 31536000.0) {
+                    step = 50.0;
+                }
+                else if (simSpeed > 86400.0) {
+                    step = 10.0;
+                } else {
+                    step = 2.0;
+                }
+
                 if (isPaused) {
                     lastTime = now;
                     return;
@@ -246,6 +256,10 @@ public class Game extends Application {
                                 b.velX -= accB * (dx / dist) * step;
                                 b.velY -= accB * (dy / dist) * step;
                             } else {
+                                double impactVelX = b.velX - a.velX;
+                                double impactVelY = b.velY - a.velY;
+                                double impactSpeed = Math.sqrt(impactVelX * impactVelX + impactVelY * impactVelY);
+
                                 double totalMass = a.getMass() + b.getMass();
                                 double newVelX = (a.getMass() * a.velX + b.getMass() * b.velX) / totalMass;
                                 double newVelY = (a.getMass() * a.velY + b.getMass() * b.velY) / totalMass;
@@ -254,7 +268,7 @@ public class Game extends Application {
                                 b.velX = newVelX;
                                 b.velY = newVelY;
 
-                                if (Math.sqrt(b.velX * b.velX + b.velY * b.velY) > 20 && a.radius >= b.radius) {
+                                if (impactSpeed > 20 && a.radius >= b.radius) {
                                     a.mass += b.mass;
                                     a.radius += b.radius;
                                     b.getPath().getPoints().clear();
@@ -271,6 +285,15 @@ public class Game extends Application {
                     }
 
                     timeBuffer -= step;
+                    trailAccumulator += step;
+                    double dynamicTrailStep = Math.max(step, Math.min(simSpeed / 60.0, 86400.0));
+
+                    if (trailAccumulator >= dynamicTrailStep) {
+                        for (Planet p : allObjects) {
+                            p.recordPosition();
+                        }
+                        trailAccumulator = 0.0;
+                    }
                 }
             }
         };
